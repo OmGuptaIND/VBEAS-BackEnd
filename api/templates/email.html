@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Thanks for Recommending Books</title>
+    </head>
+    <style>
+    </style>
+    <body>
+        Dear {{name}},
+        <br />
+        Thanks for Recommending <b>{{ total }} Books </b>  for the Library, We have Successfully
+        Recieved your Recommendations for the Following Books
+        <br />
+        <table style = "border-collapse: 'separate'; border-spacing: 0 15px;" >
+            <tr>
+                <th style="width: 150px; text-align: center; border: 1px solid black; padding: 5px;" >Sr No.</th>
+                <th style="width: 150px; text-align: center; border: 1px solid black; padding: 5px;" >Title</th>
+                <th style="width: 150px; text-align: center; border: 1px solid black; padding: 5px;" >Author</th>
+                <th style="width: 150px; text-align: center; border: 1px solid black; padding: 5px;" >Subject</th>
+                <th style="width: 150px; text-align: center; border: 1px solid black; padding: 5px;" >Publisher</th>
+                <th style="width: 150px; text-align: center; border: 1px solid black; padding: 5px;" >Medium</th>
+                <th style="width: 150px; text-align: center; border: 1px solid black; padding: 5px;" >Quantity</th>
+                <th style="width: 150px; text-align: center; border: 1px solid black; padding: 5px;" >Currency</th>
+                <th style="width: 150px; text-align: center; border: 1px solid black; padding: 5px;" >Price Per Book</th>
+            </tr>
+            {% for book in books %}
+                <tr>
+                    <td style="width: 150px; text-align: center; border: 1px solid black; padding: 5px;" >{{book.id}}</td>
+                    <td style="width: 150px; text-align: center; border: 1px solid black; padding: 5px;" >{{book.title}}</td>
+                    <td style="width: 150px; text-align: center; border: 1px solid black; padding: 5px;" >{{book.author}}</td>
+                    <td style="width: 150px; text-align: center; border: 1px solid black; padding: 5px;" >{{book.subject}}</td>
+                    <td style="width: 150px; text-align: center; border: 1px solid black; padding: 5px;" >{{book.publisher}}</td>
+                    <td style="width: 150px; text-align: center; border: 1px solid black; padding: 5px;" >{{book.medium}}</td>
+                    <td style="width: 150px; text-align: center; border: 1px solid black; padding: 5px;" >{{book.quantity}}</td>
+                    <td style="width: 150px; text-align: center; border: 1px solid black; padding: 5px;" >{{book.demo}}</td>
+                    <td style="width: 150px; text-align: center; border: 1px solid black; padding: 5px;" >{{book.price}}</td>
+                </tr>
+            {% endfor %}
+        </table>
+        <br />
+
+        <p> Library Will Get back to you soon with further details </p>
+
+        <p> Thanks, </p>
+        <p> LNMIIT Central Library </p>
+        <br />
+        <span>*FC in currency means that the price is given in Foreign Currency to know the exact currency contact Library.</span>
+        <span><small>This is a system generated email</small></span>
+
+        <section></section>
+    </body>
+</html>
