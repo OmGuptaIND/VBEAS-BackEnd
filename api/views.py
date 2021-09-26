@@ -8,6 +8,7 @@ from django.shortcuts import render, redirect
 from django.views.decorators.csrf import csrf_exempt
 from django.core.mail import send_mail
 from django.conf import settings
+from numpy import object_
 
 # Rest Frameworks
 from rest_framework.decorators import api_view, permission_classes
@@ -18,7 +19,7 @@ from django.core.paginator import Paginator
 
 from openpyxl import * 
 from openpyxl.writer.excel import save_virtual_workbook
-# import pandas as pd
+import pandas as pd
 from openpyxl import load_workbook
 
 # Models
@@ -466,12 +467,6 @@ def purchaseApi(request):
             'message' : f"Enter a Valid Email"
         }, status=status.HTTP_206_PARTIAL_CONTENT)
 
-    return Response({
-        'status' : 'Success',
-        'code' : 201,
-        'Message' : "Recieved",
-    }, status = status.HTTP_201_CREATED)
-
 
 @api_view(['POST'])
 @permission_classes((AllowAny,))
@@ -630,111 +625,6 @@ def getOrders(request):
         }, status=status.HTTP_206_PARTIAL_CONTENT)
 
 
-
-
-def booksExcel(request):
-    books = Book.objects.all()
-    wb = Workbook()
-    ws = wb.active
-
-    ws["A1"] = "Book ID"
-    ws["B1"] = "Title"
-    ws["C1"] = "Subject"
-    ws["D1"] = "Author"
-    ws["E1"] = "Year of Publication"
-    ws["F1"] = "Seller"
-    ws["G1"] = "Publisher"
-    ws["H1"] = "ISBN"
-    ws["I1"] = "Medium"
-    ws["J1"] = "Price_foreign_currency"
-    ws["K1"] = "Price_indian_currency"
-    ws["L1"] = "Price_denomination"
-    ws["M1"] = "expected_price"
-    ws["N1"] = "Book Link"
-
-    row = 2
-
-    for book in books:
-        ws["A{}".format(row)] = book.id
-        ws["B{}".format(row)] = book.title
-        ws["C{}".format(row)] = book.subject
-        ws["D{}".format(row)] = book.author
-        ws["E{}".format(row)] = book.year_of_publication
-        ws["F{}".format(row)] = book.seller.name
-        ws["G{}".format(row)] = book.publisher
-        ws["H{}".format(row)] = book.ISBN
-        ws["I{}".format(row)] = book.medium
-        ws["J{}".format(row)] = book.price_foreign_currency
-        ws["K{}".format(row)] = book.price_indian_currency
-        ws["L{}".format(row)] = book.price_denomination
-        ws["M{}".format(row)] = book.expected_price
-        ws["N{}".format(row)] = book.link
-        row +=1
-    
-    response = HttpResponse(content=save_virtual_workbook(
-        wb), content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-    response['Content-Disposition'] = "attachment; filename=Master_List_All_Books.xlsx"
-
-    print("File Created")
-    return response
-
-def booksRecommended(request):
-    recommended = Recommend.objects.all()
-    wb = Workbook()
-    ws = wb.active
-
-    ws["A1"] = "Book ID"
-    ws["B1"] = "buyer"
-    ws["C1"] = "email"
-    ws["D1"] = "Title"
-    ws["E1"] = "Subject"
-    ws["F1"] = "Author"
-    ws["G1"] = "Year of Publication"
-    ws["H1"] = "Seller"
-    ws["I1"] = "Publisher"
-    ws["J1"] = "ISBN"
-    ws["K1"] = "Medium"
-    ws["L1"] = "Price_foreign_currency"
-    ws["M1"] = "Price_indian_currency"
-    ws["N1"] = "Price_denomination"
-    ws["O1"] = "expected_price"
-    ws["P1"] = "Book Link"
-
-    row = 2
-
-    for item in recommended:
-        ws["A{}".format(row)] = item.id
-        ws["B{}".format(row)] = item.buyer
-        ws["C{}".format(row)] = item.email
-        ws["D{}".format(row)] = item.title
-        ws["E{}".format(row)] = item.subject
-        ws["F{}".format(row)] = item.author
-        ws["G{}".format(row)] = item.book.year_of_publication
-        ws["H{}".format(row)] = item.seller_name
-        ws["I{}".format(row)] = item.book.publisher
-        ws["J{}".format(row)] = item.book.ISBN
-        ws["K{}".format(row)] = item.book.medium
-        ws["L{}".format(row)] = item.book.price_foreign_currency
-        ws["M{}".format(row)] = item.book.price_indian_currency
-        ws["N{}".format(row)] = item.book.price_denomination
-        ws["O{}".format(row)] = item.book.expected_price
-        ws["P{}".format(row)] = item.book.link
-        row +=1
-    
-    response = HttpResponse(content=save_virtual_workbook(
-        wb), content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-    response['Content-Disposition'] = "attachment; filename=Recommended_List_All_Books.xlsx"
-
-    print("File Created")
-    return response
-
-
-def booksSubjectRecommended(request, subject):
-    return JsonResponse({
-        "status" : "success",
-        "code" : 200,
-    })
-
 from django.conf import settings
 @api_view(['POST'])
 @permission_classes([AllowAny,])
@@ -795,55 +685,90 @@ def import_book_data(request):
     })
 
 
-
-
-# Admin Panel API
 @api_view(['GET'])
 @csrf_exempt
 def getAdminCount(request, pk):
-    recommendationObj = Recommend.objects.all()
-    paperback = 0
-    ebooks = 0
-    cost = 0
-    if pk > 2 and pk < 1:
-        return JsonResponse({
-            "status" : "error",
-            "code" : 404,
-            "Message" : "No Such Type Available"
-        })
-    for obj in recommendationObj:
+    if pk is not None:
+        if pk > 2 and pk < 1:
+            return Response({
+                'Status' : "Error",
+                'code' : 404,
+                'message' : "This type doesnt Exist"
+            }, status=status.HTTP_200_OK)
         if pk == 1:
-            if obj.book.medium == "PAPERBACK" and obj.recommended_to_library == True:
-                paperback += 1
-                if obj.book.price_denomination == 'INR' or obj.book.price_denomination == 'Rs':
-                    cost += obj.book.expected_price
-            elif obj.book.medium == "ELECTRONIC" and obj.recommended_to_library == True:
-                if obj.book.price_denomination == 'INR' or obj.book.price_denomination == 'Rs':
-                    cost += obj.book.expected_price
-                ebooks += 1
+            object = Recommend.objects.all()
+        else :
+            object = Order.objects.all()
+        
+        paperback = 0
+        ebooks = 0
+        cost = 0
 
-        elif pk == 2:
-            if obj.book.medium == "PAPERBACK" and obj.is_ordered == True:
+        for obj in object:
+            if obj.book.medium == "PAPERBACK":
                 paperback += 1
                 if obj.book.price_denomination == 'INR' or obj.book.price_denomination == 'Rs':
                     cost += obj.book.expected_price
-            elif obj.book.medium == "ELECTRONIC" and obj.is_ordered == True:
+            
+            elif obj.book.medium == "ELECTRONIC":
+                ebooks += 1
                 if obj.book.price_denomination == 'INR' or obj.book.price_denomination == 'Rs':
                     cost += obj.book.expected_price
-                ebooks += 1
+
+        return JsonResponse({
+            "status" : "Success",
+            "code" : 200,
+            "data" : {
+                "count" : paperback + ebooks,
+                "paperbacks" : paperback,
+                "ebooks" : ebooks,
+                "cost" : cost
+            }
+        })
+
+@api_view(['GET'])
+@csrf_exempt
+def bookAction(request, pk):
+    if pk > 2 and pk < 1:
+            return Response({
+                'Status' : "Error",
+                'code' : 404,
+                'message' : "This type doesnt Exist"
+            }, status=status.HTTP_200_OK)
+    
+    if type == 1:
+        object = Recommend.objects.all()
+
+    else:
+        object = Order.objects.all()
+
+    count = [0, 0, 0, 0, 0, 0, 0]
+
+    for obj in object:
+        if obj.book.subject == 'CSE':
+            count[0] += 1
+        elif obj.book.subject == 'CCE':
+            count[1] += 1
+        elif obj.book.subject == 'ECE':
+            count[2] += 1
+        elif obj.book.subject == 'MME':
+            count[3] += 1
+        elif obj.book.subject == 'Physics':
+            count[4] += 1
+        elif obj.book.subject == 'HSS':
+            count[5] += 1
+        elif obj.book.subject == 'Mathematics':
+            count[6] += 1
+    print(count)
     return JsonResponse({
         "status" : "Success",
         "code" : 200,
         "data" : {
-            "count" : paperback + ebooks,
-            "paperbacks" : paperback,
-            "ebooks" : ebooks,
-            "cost" : cost
+            "count" : count
         }
     })
 
-@api_view(['GET'])
-@csrf_exempt
+
 def booksActionsSeller(request, sellerid, type):
     if sellerid > 9 or sellerid < 1:
         return JsonResponse({
@@ -857,6 +782,7 @@ def booksActionsSeller(request, sellerid, type):
             "code" : 404,
             "message" : "Type Exceeded Permissible range"
         })
+    
     try:
         sellerObj = Seller.objects.get( id = sellerid )
     except:
@@ -865,11 +791,15 @@ def booksActionsSeller(request, sellerid, type):
             "code" : 404,
             'Message' : "Seller Doesnt Exist"
         })
+    
     if type == 1:
         object = Recommend.objects.filter( seller = sellerObj )
     else:
         object = Order.objects.filter( seller = sellerObj )
+
+    
     count = [0, 0, 0, 0, 0, 0, 0]
+
     for obj in object:
         if obj.book.subject == 'CSE':
             count[0] += 1
@@ -885,7 +815,6 @@ def booksActionsSeller(request, sellerid, type):
             count[5] += 1
         elif obj.book.subject == 'Mathematics':
             count[6] += 1
-    print(count)
     return JsonResponse({
         "status" : "Success",
         "code" : 200,
@@ -894,91 +823,61 @@ def booksActionsSeller(request, sellerid, type):
         }
     })
 
-@api_view(['GET'])
-@csrf_exempt
-def bookAction(request, type):
-    if type > 2 or type < 1:
-        return JsonResponse({
-            "status" : "error",
-            "code" : 404,
-            "message" : "Type Exceeded Permissible range"
-        })
-    if type == 1:
-        object = Recommend.objects.all()
-    else:
-        object = Order.objects.all()
-    
-    count = [0, 0, 0, 0, 0, 0, 0]
-    for obj in object:
-        if obj.book.subject == 'CSE':
-            count[0] += 1
-        elif obj.book.subject == 'CCE':
-            count[1] += 1
-        elif obj.book.subject == 'ECE':
-            count[2] += 1
-        elif obj.book.subject == 'MME':
-            count[3] += 1
-        elif obj.book.subject == 'Physics':
-            count[4] += 1
-        elif obj.book.subject == 'HSS':
-            count[5] += 1
-        elif obj.book.subject == 'Mathematics':
-            count[6] += 1
-    print(count)
-    return JsonResponse({
-        "status" : "Success",
-        "code" : 200,
-        "data" : {
-            "count" : count
-        }
-    })
+
+
+
+
 
 def recommendExcelApiAll(request, type):
     if type == 1:
-        recommendObj = Recommend.objects.all()
+        object = Recommend.objects.all()
     else :
-        recommendObj = Order.objects.all()
+        object = Order.objects.all()
     wb = Workbook()
     ws = wb.active
 
     ws["A1"] = "ID"
     ws["B1"] = "Name"
-    ws["C1"] = "Email"
-    ws["D1"] = "Date"
-    ws["E1"] = "Title"
-    ws["F1"] = "Subject"
-    ws["G1"] = "Author"
-    ws["H1"] = "Year of Publication"
-    ws["I1"] = "Seller"
-    ws["J1"] = "Publisher"
-    ws["K1"] = "ISBN"
-    ws["L1"] = "Medium"
-    ws["M1"] = "Price_foreign_currency"
-    ws["N1"] = "Price_indian_currency"
-    ws["O1"] = "Denomination"
-    ws["P1"] = "expected_price"
-    ws["Q1"] = "Book Link"
+    ws["C1"] = "Type"
+    ws["D1"] = "Email"
+    ws["E1"] = "Date"
+    ws["F1"] = "Title"
+    ws["G1"] = "Subject"
+    ws["H1"] = "Author"
+    ws["I1"] = "Year of Publication"
+    ws["J1"] = "Seller"
+    ws["K1"] = "Publisher"
+    ws["L1"] = "ISBN"
+    ws["M1"] = "Medium"
+    ws["N1"] = "Price_foreign_currency"
+    ws["O1"] = "Price_indian_currency"
+    ws["P1"] = "Denomination"
+    ws["Q1"] = "expected_price"
+    ws["R1"] = 'Quantity'
+    ws["S1"] = "Book Link"
 
     row = 2
 
-    for obj in recommendObj:
+    for obj in object:
         ws["A{}".format(row)] = obj.id
-        ws["B{}".format(row)] = obj.buyer
-        ws["C{}".format(row)] = obj.email
-        ws["D{}".format(row)] = obj.created_at.date()
-        ws["E{}".format(row)] = obj.book.title
-        ws["F{}".format(row)] = obj.book.subject
-        ws["G{}".format(row)] = obj.book.author
-        ws["H{}".format(row)] = obj.book.year_of_publication
-        ws["I{}".format(row)] = obj.book.seller.name
-        ws["J{}".format(row)] = obj.book.publisher
-        ws["K{}".format(row)] = obj.book.ISBN
-        ws["L{}".format(row)] = obj.book.medium
-        ws["M{}".format(row)] = obj.book.price_foreign_currency
-        ws["N{}".format(row)] = obj.book.price_indian_currency
-        ws["O{}".format(row)] = obj.book.price_denomination
-        ws["P{}".format(row)] = obj.book.expected_price
-        ws["Q{}".format(row)] = obj.book.link
+        ws["B{}".format(row)] = obj.name
+        ws["C{}".format(row)] = obj.usertype.name
+        ws["D{}".format(row)] = obj.email
+        ws["E{}".format(row)] = obj.created_at.date()
+        ws["F{}".format(row)] = obj.book.title
+        ws["G{}".format(row)] = obj.book.subject
+        ws["H{}".format(row)] = obj.book.author
+        ws["I{}".format(row)] = obj.book.year_of_publication
+        ws["J{}".format(row)] = obj.book.seller.name
+        ws["K{}".format(row)] = obj.book.publisher
+        ws["L{}".format(row)] = obj.book.ISBN
+        ws["M{}".format(row)] = obj.book.medium
+        ws["N{}".format(row)] = obj.book.price_foreign_currency
+        ws["O{}".format(row)] = obj.book.price_indian_currency
+        ws["P{}".format(row)] = obj.book.price_denomination
+        ws["Q{}".format(row)] = obj.book.expected_price
+        ws["R{}".format(row)] = obj.quantity
+        ws["S{}".format(row)] = obj.book.link
         row += 1
 
     response = HttpResponse(content=save_virtual_workbook(
@@ -991,51 +890,54 @@ def recommendExcelApiAll(request, type):
 def recommendExcelApiSeller(request, type, seller):
     sellerobj = Seller.objects.get(id = seller)
     if type == 1:
-        recommendObj = Recommend.objects.filter( seller = sellerobj, recommended_to_library = True)
+        object = Recommend.objects.filter( seller = sellerobj )
     else :
-        recommendObj = Recommend.objects.filter( seller = sellerobj, is_ordered = True)
+        object = Order.objects.filter( seller = sellerobj )
     wb = Workbook()
     ws = wb.active
 
     ws["A1"] = "ID"
     ws["B1"] = "Name"
-    ws["C1"] = "Email"
-    ws["D1"] = "Date"
-    ws["E1"] = "Title"
-    ws["F1"] = "Subject"
-    ws["G1"] = "Author"
-    ws["H1"] = "Year of Publication"
-    ws["I1"] = "Seller"
-    ws["J1"] = "Publisher"
-    ws["K1"] = "ISBN"
-    ws["L1"] = "Medium"
-    ws["M1"] = "Price_foreign_currency"
-    ws["N1"] = "Price_indian_currency"
-    ws["O1"] = "Denomination"
-    ws["P1"] = "expected_price"
-    ws["Q1"] = "Book Link"
+    ws["C1"] = "Type"
+    ws["D1"] = "Email"
+    ws["E1"] = "Date"
+    ws["F1"] = "Title"
+    ws["G1"] = "Subject"
+    ws["H1"] = "Author"
+    ws["I1"] = "Year of Publication"
+    ws["J1"] = "Seller"
+    ws["K1"] = "Publisher"
+    ws["L1"] = "ISBN"
+    ws["M1"] = "Medium"
+    ws["N1"] = "Price_foreign_currency"
+    ws["O1"] = "Price_indian_currency"
+    ws["P1"] = "Denomination"
+    ws["Q1"] = "expected_price"
+    ws["R1"] = 'Quantity'
+    ws["S1"] = "Book Link"
 
     row = 2
 
-    for obj in recommendObj:
+    for obj in object:
         ws["A{}".format(row)] = obj.id
-        ws["B{}".format(row)] = obj.buyer
-        ws["C{}".format(row)] = obj.email
-        ws["D{}".format(row)] = obj.created_at.date()
-        ws["E{}".format(row)] = obj.book.title
-        ws["F{}".format(row)] = obj.book.subject
-        ws["G{}".format(row)] = obj.book.author
-        ws["H{}".format(row)] = obj.book.year_of_publication
-        ws["I{}".format(row)] = obj.book.seller.name
-        ws["J{}".format(row)] = obj.book.publisher
-        ws["K{}".format(row)] = obj.book.ISBN
-        ws["L{}".format(row)] = obj.book.medium
-        ws["M{}".format(row)] = obj.book.price_foreign_currency
-        ws["N{}".format(row)] = obj.book.price_indian_currency
-        ws["O{}".format(row)] = obj.book.price_denomination
-        ws["P{}".format(row)] = obj.book.expected_price
-        ws["Q{}".format(row)] = obj.book.link
-
+        ws["B{}".format(row)] = obj.name
+        ws["C{}".format(row)] = obj.usertype.name
+        ws["D{}".format(row)] = obj.email
+        ws["E{}".format(row)] = obj.created_at.date()
+        ws["F{}".format(row)] = obj.book.title
+        ws["G{}".format(row)] = obj.book.subject
+        ws["H{}".format(row)] = obj.book.author
+        ws["I{}".format(row)] = obj.book.year_of_publication
+        ws["J{}".format(row)] = obj.book.seller.name
+        ws["K{}".format(row)] = obj.book.publisher
+        ws["L{}".format(row)] = obj.book.ISBN
+        ws["M{}".format(row)] = obj.book.medium
+        ws["N{}".format(row)] = obj.book.price_foreign_currency
+        ws["O{}".format(row)] = obj.book.price_indian_currency
+        ws["P{}".format(row)] = obj.book.price_denomination
+        ws["Q{}".format(row)] = obj.book.expected_price
+        ws["R{}".format(row)] = obj.quantity
+        ws["S{}".format(row)] = obj.book.link
         row += 1
 
     response = HttpResponse(content=save_virtual_workbook(
@@ -1047,51 +949,55 @@ def recommendExcelApiSeller(request, type, seller):
 
 def recommendExcelApiSubject(request, type, subject):
     if type == 1:
-        recommendObj = Recommend.objects.filter( recommended_to_library = True)
+        object = Recommend.objects.all()
     else :
-        recommendObj = Recommend.objects.filter( is_ordered = True)
+        object = Order.objects.all()
     wb = Workbook()
     ws = wb.active
 
     ws["A1"] = "ID"
     ws["B1"] = "Name"
-    ws["C1"] = "Email"
-    ws["D1"] = "Date"
-    ws["E1"] = "Title"
-    ws["F1"] = "Subject"
-    ws["G1"] = "Author"
-    ws["H1"] = "Year of Publication"
-    ws["I1"] = "Seller"
-    ws["J1"] = "Publisher"
-    ws["K1"] = "ISBN"
-    ws["L1"] = "Medium"
-    ws["M1"] = "Price_foreign_currency"
-    ws["N1"] = "Price_indian_currency"
-    ws["O1"] = "Denomination"
-    ws["P1"] = "expected_price"
-    ws["Q1"] = "Book Link"
+    ws["C1"] = "Type"
+    ws["D1"] = "Email"
+    ws["E1"] = "Date"
+    ws["F1"] = "Title"
+    ws["G1"] = "Subject"
+    ws["H1"] = "Author"
+    ws["I1"] = "Year of Publication"
+    ws["J1"] = "Seller"
+    ws["K1"] = "Publisher"
+    ws["L1"] = "ISBN"
+    ws["M1"] = "Medium"
+    ws["N1"] = "Price_foreign_currency"
+    ws["O1"] = "Price_indian_currency"
+    ws["P1"] = "Denomination"
+    ws["Q1"] = "expected_price"
+    ws["R1"] = 'Quantity'
+    ws["S1"] = "Book Link"
 
     row = 2
 
-    for obj in recommendObj:
+    for obj in object:
         if obj.book.subject.lower() == subject.lower():
             ws["A{}".format(row)] = obj.id
-            ws["B{}".format(row)] = obj.buyer
-            ws["C{}".format(row)] = obj.email
-            ws["D{}".format(row)] = obj.created_at.date()
-            ws["E{}".format(row)] = obj.book.title
-            ws["F{}".format(row)] = obj.book.subject
-            ws["G{}".format(row)] = obj.book.author
-            ws["H{}".format(row)] = obj.book.year_of_publication
-            ws["I{}".format(row)] = obj.book.seller.name
-            ws["J{}".format(row)] = obj.book.publisher
-            ws["K{}".format(row)] = obj.book.ISBN
-            ws["L{}".format(row)] = obj.book.medium
-            ws["M{}".format(row)] = obj.book.price_foreign_currency
-            ws["N{}".format(row)] = obj.book.price_indian_currency
-            ws["O{}".format(row)] = obj.book.price_denomination
-            ws["P{}".format(row)] = obj.book.expected_price
-            ws["Q{}".format(row)] = obj.book.link
+            ws["B{}".format(row)] = obj.name
+            ws["C{}".format(row)] = obj.usertype.name
+            ws["D{}".format(row)] = obj.email
+            ws["E{}".format(row)] = obj.created_at.date()
+            ws["F{}".format(row)] = obj.book.title
+            ws["G{}".format(row)] = obj.book.subject
+            ws["H{}".format(row)] = obj.book.author
+            ws["I{}".format(row)] = obj.book.year_of_publication
+            ws["J{}".format(row)] = obj.book.seller.name
+            ws["K{}".format(row)] = obj.book.publisher
+            ws["L{}".format(row)] = obj.book.ISBN
+            ws["M{}".format(row)] = obj.book.medium
+            ws["N{}".format(row)] = obj.book.price_foreign_currency
+            ws["O{}".format(row)] = obj.book.price_indian_currency
+            ws["P{}".format(row)] = obj.book.price_denomination
+            ws["Q{}".format(row)] = obj.book.expected_price
+            ws["R{}".format(row)] = obj.quantity
+            ws["S{}".format(row)] = obj.book.link
             row += 1
 
     response = HttpResponse(content=save_virtual_workbook(
@@ -1104,51 +1010,55 @@ def recommendExcelApiSubject(request, type, subject):
 def recommendExcelApiSellerAndSubject(request, type, seller, subject):
     sellerobj = Seller.objects.get(id = seller)
     if type == 1:
-        recommendObj = Recommend.objects.filter( seller = sellerobj, recommended_to_library = True)
+        object = Recommend.objects.filter( seller = sellerobj )
     else :
-        recommendObj = Recommend.objects.filter( seller = sellerobj, is_ordered = True)
+        object = Order.objects.filter( seller = sellerobj )
     wb = Workbook()
     ws = wb.active
 
     ws["A1"] = "ID"
     ws["B1"] = "Name"
-    ws["C1"] = "Email"
-    ws["D1"] = "Date"
-    ws["E1"] = "Title"
-    ws["F1"] = "Subject"
-    ws["G1"] = "Author"
-    ws["H1"] = "Year of Publication"
-    ws["I1"] = "Seller"
-    ws["J1"] = "Publisher"
-    ws["K1"] = "ISBN"
-    ws["L1"] = "Medium"
-    ws["M1"] = "Price_foreign_currency"
-    ws["N1"] = "Price_indian_currency"
-    ws["O1"] = "Denomination"
-    ws["P1"] = "expected_price"
-    ws["Q1"] = "Book Link"
+    ws["C1"] = "Type"
+    ws["D1"] = "Email"
+    ws["E1"] = "Date"
+    ws["F1"] = "Title"
+    ws["G1"] = "Subject"
+    ws["H1"] = "Author"
+    ws["I1"] = "Year of Publication"
+    ws["J1"] = "Seller"
+    ws["K1"] = "Publisher"
+    ws["L1"] = "ISBN"
+    ws["M1"] = "Medium"
+    ws["N1"] = "Price_foreign_currency"
+    ws["O1"] = "Price_indian_currency"
+    ws["P1"] = "Denomination"
+    ws["Q1"] = "expected_price"
+    ws["R1"] = 'Quantity'
+    ws["S1"] = "Book Link"
 
     row = 2
 
-    for obj in recommendObj:
+    for obj in object:
         if obj.book.subject.lower() == subject.lower():
             ws["A{}".format(row)] = obj.id
-            ws["B{}".format(row)] = obj.buyer
-            ws["C{}".format(row)] = obj.email
-            ws["D{}".format(row)] = obj.created_at.date()
-            ws["E{}".format(row)] = obj.book.title
-            ws["F{}".format(row)] = obj.book.subject
-            ws["G{}".format(row)] = obj.book.author
-            ws["H{}".format(row)] = obj.book.year_of_publication
-            ws["I{}".format(row)] = obj.book.seller.name
-            ws["J{}".format(row)] = obj.book.publisher
-            ws["K{}".format(row)] = obj.book.ISBN
-            ws["L{}".format(row)] = obj.book.medium
-            ws["M{}".format(row)] = obj.book.price_foreign_currency
-            ws["N{}".format(row)] = obj.book.price_indian_currency
-            ws["O{}".format(row)] = obj.book.price_denomination
-            ws["P{}".format(row)] = obj.book.expected_price
-            ws["Q{}".format(row)] = obj.book.link
+            ws["B{}".format(row)] = obj.name
+            ws["C{}".format(row)] = obj.usertype.name
+            ws["D{}".format(row)] = obj.email
+            ws["E{}".format(row)] = obj.created_at.date()
+            ws["F{}".format(row)] = obj.book.title
+            ws["G{}".format(row)] = obj.book.subject
+            ws["H{}".format(row)] = obj.book.author
+            ws["I{}".format(row)] = obj.book.year_of_publication
+            ws["J{}".format(row)] = obj.book.seller.name
+            ws["K{}".format(row)] = obj.book.publisher
+            ws["L{}".format(row)] = obj.book.ISBN
+            ws["M{}".format(row)] = obj.book.medium
+            ws["N{}".format(row)] = obj.book.price_foreign_currency
+            ws["O{}".format(row)] = obj.book.price_indian_currency
+            ws["P{}".format(row)] = obj.book.price_denomination
+            ws["Q{}".format(row)] = obj.book.expected_price
+            ws["R{}".format(row)] = obj.quantity
+            ws["S{}".format(row)] = obj.book.link
             row += 1
 
     response = HttpResponse(content=save_virtual_workbook(
@@ -1157,5 +1067,4 @@ def recommendExcelApiSellerAndSubject(request, type, seller, subject):
 
     print("File Created")
     return response
-
 

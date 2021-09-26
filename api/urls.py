@@ -1,5 +1,4 @@
-from api.views import bookAction, booksActionsSeller, getAdminCount, recommendExcelApiAll, recommendExcelApiSeller, recommendExcelApiSellerAndSubject, recommendExcelApiSubject
-from api.views import index, getBook, userType, filterByStalls, filterBooks, recommendApi, purchaseApi, getRecommendation, getOrders
+from api.views import index, getBook, userType, filterByStalls, filterBooks, recommendApi, purchaseApi, getRecommendation, getOrders, import_book_data, getAdminCount, bookAction, booksActionsSeller, recommendExcelApiAll, recommendExcelApiSeller, recommendExcelApiSellerAndSubject, recommendExcelApiSubject
 from django.urls import path
 
 urlpatterns = [
@@ -15,12 +14,14 @@ urlpatterns = [
     path( 'recommendations/', getRecommendation, name = 'Recommendation' ),
     path( 'orders/', getOrders, name = 'Get Orders' ),
 
+    path('admin/books/import', import_book_data, name = 'Import Books'),
 
+    path('admin/count/<int:pk>/', getAdminCount, name = "getAdminCount"),
+    path('admin/books/action/<int:pk>/', bookAction, name = 'booksActions'),
+
+    path('admin/books/action/seller/<int:sellerid>/<int:type>/',booksActionsSeller, name = 'booksActions'),
     path('admin/<int:type>/excel/all', recommendExcelApiAll, name = 'RecommendApi'),
     path('admin/<int:type>/excel/subject/<str:subject>', recommendExcelApiSubject, name = 'RecommendApi'),
     path('admin/<int:type>/excel/seller/<int:seller>', recommendExcelApiSeller, name = 'RecommendApi'),
     path('admin/<int:type>/excel/<int:seller>/<str:subject>', recommendExcelApiSellerAndSubject, name = 'recommendExcelApiSellerAndSubject'),
-    path('admin/count/<int:pk>/', getAdminCount, name = "getAdminCount"),
-    path('admin/books/action/<int:type>/', bookAction, name = 'booksActions'),
-    path('admin/books/action/seller/<int:sellerid>/<int:type>/',booksActionsSeller , name = 'booksActions'),
 ]
