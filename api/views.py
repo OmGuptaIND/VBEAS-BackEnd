@@ -729,7 +729,7 @@ def getAdminCount(request, pk):
                 if obj.book.price_denomination == 'INR' or obj.book.price_denomination == 'Rs':
                     cost += obj.book.expected_price
             
-            elif obj.book.medium == "ELECTRONIC":
+            elif obj.book.medium == "electronic":
                 ebooks += 1
                 if obj.book.price_denomination == 'INR' or obj.book.price_denomination == 'Rs':
                     cost += obj.book.expected_price
@@ -738,7 +738,7 @@ def getAdminCount(request, pk):
             "status" : "Success",
             "code" : 200,
             "data" : {
-                "count" : paperback + ebooks,
+                "count" : len( object.values() ),
                 "paperbacks" : paperback,
                 "ebooks" : ebooks,
                 "cost" : cost
