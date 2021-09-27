@@ -505,6 +505,13 @@ def getRecommendation(request):
 
         try:
             recommendObj = Recommend.objects.filter( email = email ).order_by('-created_at')
+            if len(list(recommendObj.values())) == 0:
+                return Response({
+                    'status' : 'Success',
+                    'code' : 200,
+                    'data' : [],
+                    'message' : 'Nothing Found',
+                }, status=status.HTTP_200_OK)
             if recommendObj.exists():
                 books = []
                 for obj in list(recommendObj.values()):
@@ -529,7 +536,6 @@ def getRecommendation(request):
                         "typeCode" : 1,
                         "data":books,
                 }, status=status.HTTP_200_OK)
-            
             else:
                     return Response({
                         "status" : "error",
@@ -583,6 +589,13 @@ def getOrders(request):
 
         try:
             ordersObj = Order.objects.filter( email = email ).order_by('-created_at')
+            if len(list(ordersObj.values())) == 0:
+                return Response({
+                    'status' : 'Success',
+                    'code' : 200,
+                    'data' : [],
+                    'message' : 'Nothing Found',
+                }, status=status.HTTP_200_OK)
             if ordersObj.exists():
                 books = []
                 for obj in list(ordersObj.values()):
