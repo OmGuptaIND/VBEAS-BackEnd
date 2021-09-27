@@ -258,7 +258,7 @@ def getBook(request, book_id):
 @permission_classes((AllowAny,))
 def userType(request):
     if request.method == 'POST':
-        admins = ['20ume034', 'pahmad', 'shweta.pandey', 'librarian']
+        admins = ['acquisition.library', 'pahmad', 'shweta.pandey', 'librarian']
         data = request.data
         regex = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
         if re.fullmatch(regex, data['email']):
@@ -432,6 +432,12 @@ def purchaseApi(request):
         book_id = query['book_id']
         qty = query['qty']
         userType = UserType.objects.get( code = code )
+        if userType.code == 4:
+            return Response({
+                'status' : 'Error',
+                'code' : 400,
+                'message' : "Students are allowed to do Personal Purchase"
+            }, status= status.HTTP_200_OK)
         try:
             book = Book.objects.get( id = book_id )
             order = Order()
@@ -498,7 +504,7 @@ def getRecommendation(request):
         name = query['name']
 
         try:
-            recommendObj = Recommend.objects.filter( email = email )
+            recommendObj = Recommend.objects.filter( email = email ).order_by('-created_at')
             if recommendObj.exists():
                 books = []
                 for obj in list(recommendObj.values()):
@@ -576,7 +582,7 @@ def getOrders(request):
         name = query['name']
 
         try:
-            ordersObj = Order.objects.filter( email = email )
+            ordersObj = Order.objects.filter( email = email ).order_by('-created_at')
             if ordersObj.exists():
                 books = []
                 for obj in list(ordersObj.values()):

@@ -14,7 +14,7 @@ urlpatterns = [
     path( 'recommendations/', getRecommendation, name = 'Recommendation' ),
     path( 'orders/', getOrders, name = 'Get Orders' ),
 
-    path('admin/books/import', import_book_data, name = 'Import Books'),
+    path('admin/books/import/', import_book_data, name = 'Import Books'),
 
     path('admin/count/<int:pk>/', getAdminCount, name = "getAdminCount"),
     path('admin/books/action/<int:pk>/', bookAction, name = 'booksActions'),

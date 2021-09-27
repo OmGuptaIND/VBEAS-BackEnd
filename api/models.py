@@ -10,7 +10,7 @@ class Seller(models.Model):
     The Details of a Book Seller
     """
     name = models.CharField(max_length=200, blank=True, null = True)
-    contact_no = models.CharField(max_length = 10, blank=True, null=True, unique=True)
+    contact_no = models.CharField(max_length = 10, blank=True, null=True)
     email=models.EmailField(max_length=200,null=True, blank=True)
     logo = models.ImageField(
         upload_to='book_sellers_logo', null=True, blank=True)
@@ -65,9 +65,8 @@ class Book(models.Model):
         return f"{self.title} + {self.seller.name}"
     
     def save(self, *args, **kwargs):
-        self.price_foreign_currency = str(self.price_foreign_currency).replace(',', '')
+        self.price_indian_currency = str(self.price_indian_currency).replace(',', '')
         output = re.findall(r'\d+', self.price_indian_currency)
-
         if len(output) == 0:  
             self.price_foreign_currency = str(self.price_foreign_currency).replace(',', '')
             output = re.findall(r'\d+', self.price_foreign_currency)
@@ -176,7 +175,7 @@ class Order(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.buyer} - {self.email}"
+        return f"{self.name} - {self.email}"
 
 
 class ExcelFileUpload(models.Model):

@@ -28,7 +28,7 @@ SECRET_KEY = config('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['library.lnmiit.ac.in', '127.0.0.1', 'localhost' ,'apilibrarylnm.herokuapp.com']
 
 
 # Application definition
@@ -81,14 +81,14 @@ TEMPLATES = [
     },
 ]
 
-CORS_ORIGIN_ALLOW_ALL = True
+CORS_ORIGIN_ALLOW_ALL = False
 
-# CORS_ORIGIN_WHITELIST = (
-#     'http://localhost:3000',
-#     'http://localhost:3001',
-#     'https://library.lnmiit.ac.in',
-#     'http://library.lnmiit.ac.in'
-# )
+CORS_ORIGIN_WHITELIST = (
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'https://library.lnmiit.ac.in',
+    'http://library.lnmiit.ac.in'
+)
 
 WSGI_APPLICATION = 'server.wsgi.application'
 
@@ -114,7 +114,7 @@ DATABASES = {
             'NAME': 'library_db',
             'ENFORCE_SCHEMA': False,
             'CLIENT': {
-                'host': test_host
+                'host': host
             }  
         }
 }
