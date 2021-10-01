@@ -755,7 +755,7 @@ def bookAction(request, pk):
                 'message' : "This type doesnt Exist"
             }, status=status.HTTP_200_OK)
     
-    if type == 1:
+    if pk == 1:
         object = Recommend.objects.all()
 
     else:
